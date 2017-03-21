@@ -4,7 +4,7 @@
 import java.io.*;
 import java.sql.*;
 
-public class DatabaseInserter {
+public class Database {
     public void insert(String fileName){
         try {
             String jdbcDriver = "com.mysql.jdbc.Driver";
@@ -62,6 +62,13 @@ public class DatabaseInserter {
             sqlQuery = "CREATE TABLE robots(" +
                     "disallow VARCHAR(255) NOT NULL," +
                     "PRIMARY KEY (disallow));";
+            stmt.executeUpdate(sqlQuery);
+            sqlQuery = "CREATE TABLE refresh(" +
+                    "thread INT," +
+                    "pageNum INT," +
+                    "refresh INT DEFAULT 24," +
+                    "link VARCHAR(255)," +
+                    "PRIMARY KEY (thread,pageNum));";
             stmt.executeUpdate(sqlQuery);
             stmt.close();
 

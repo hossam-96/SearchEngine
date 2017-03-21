@@ -50,7 +50,7 @@ public abstract class UrlCleaner {
         if (options.isStripFragment()) {
             fragment = null;
         }
-        String path = uri.getPath();
+        String path = uri.getPath().toLowerCase();
 //        if (path != null) {
 //            path = Paths.get(path).normalize().toString();
 //        }
