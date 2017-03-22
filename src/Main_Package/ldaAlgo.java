@@ -55,7 +55,7 @@ public class ldaAlgo {
             ArrayList<String> doc = new ArrayList<String>();
 
             String vocabs[] = d.split(" "); //split vocabs
-            System.out.println(d);
+//            System.out.println(d);
 
             for (String w : vocabs) {
 
@@ -71,11 +71,8 @@ public class ldaAlgo {
 
             this.docMat.add(doc);  this.currS.add(s);
         }
-        //Edit this
-        int DMdims[] = {topNum, this.docMat.size()};
-        this.topDocMat = new SparseMatrix(DMdims);
-        int WDdims[] = {this.allWords, topNum};
-        this.wordTopMat = new SparseMatrix(WDdims);
+        this.topDocMat = new SparseMatrix(topNum, this.docMat.size());
+        this.wordTopMat = new SparseMatrix(this.allWords, topNum);
 
         //init NWT
         for (int i = 0; i < topNum; i++)
@@ -185,9 +182,9 @@ public class ldaAlgo {
                 //Normalization constant 
             }
             for (int topicIdx = 0; topicIdx <= this.topNum; topicIdx++) {
-                System.out.print(Prob[topicIdx] + " ");
+//                System.out.print(Prob[topicIdx] + " ");
             }
-            System.out.println();
+//            System.out.println();
 
             //===========Updating and Re-assigning
             for (int topicIdx = 1; topicIdx <= this.topNum; topicIdx++) {
@@ -294,7 +291,7 @@ public class ldaAlgo {
 
 //            System.out.println();
         }
-        System.out.println(wordTopicProb);
+//        System.out.println(wordTopicProb);
     }
 
     public void buildTopicDocProb(){
@@ -316,7 +313,7 @@ public class ldaAlgo {
             tmp.clear();
 //            System.out.println();
         }
-        System.out.println(topicDocProb);
+//        System.out.println(topicDocProb);
     }
 
 
@@ -372,7 +369,7 @@ public class ldaAlgo {
             invertedIndexDist.put(wIdxInv.get(i),new ArrayList<Float>(tmp));
             tmp.clear();
         }
-        System.out.println(invertedIndexDist);
+//        System.out.println(invertedIndexDist);
         return invertedIndexDist;
     }
     //==============================================================================
