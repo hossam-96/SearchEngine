@@ -20,6 +20,7 @@ public class RThread extends Thread {
     private int threadNum, numOfThreads, seedsNum = 500;
     private java.sql.Connection conn = null;
     private Set<String> seeds;
+
     public RThread(int num, int num2, Collection<String> c){
         threadNum = num;
         numOfThreads = num2;
@@ -104,7 +105,7 @@ public class RThread extends Thread {
 
                         Elements linksOnPage = htmlDocument.select("a[href]");
 
-                        
+
                         for (Element link : linksOnPage) {
                             try {
                                 URL url = new URL(link.absUrl("href"));
@@ -126,18 +127,27 @@ public class RThread extends Thread {
                                         continue;
                                     }
 
-                                    
+
                                     FileWriter wr = new FileWriter("pages/" + threadNum + "_" + numOfPages++ + ".txt");
-                                    wr.write(htmlDocument.title() + "\n" + urlToString + "\n" + htmlDocument.text());
+                                    String htmlString = htmlDocument.text();
+                                    if(htmlDocument.text().indexOf('\n') < 0)
+                                        wr.write(htmlDocument.title() + "\n" + urlToString + "\n" + htmlString);
+                                    else{
+                                        wr.write(htmlDocument.title() + "\n" + urlToString + "\n" + htmlString.substring(0,htmlString.indexOf('\n')));
+                                    }
                                     wr.close();
 
                                     sqlQuery = "UPDATE threads SET numOfPages = " + (int)numOfPages
                                             + " WHERE thread = " + (int)threadNum + ";";
                                     stmt2.executeUpdate(sqlQuery);
-                                    
+
+                                    sqlQuery = "INSERT INTO refresh(thread, pageNum, link) VALUES (" +
+                                            threadNum + ", " + (int)(numOfPages - 1) + ", '" + urlToString + "');";
+                                    stmt2.executeUpdate(sqlQuery);
                                 }
                             }
                             catch (Exception e){
+                                System.out.println(e.getMessage());
                             }
                         }
 
@@ -209,6 +219,10 @@ public class RThread extends Thread {
 
         String[] left = right[1].split("User-agent:");
 
-        return left[0].split("(Disallow:| )");
+        String[] d = left[0].split("(Disallow:| )");
+        for (int i = 0; i < d.length; i++) {
+            d[i] = d[i].toLowerCase();
+        }
+        return d;
     }
 }

@@ -19,93 +19,102 @@ public class ldaAlgo {
 
 
     //==============================================================indexed words
-    private Map<String, Integer> wIdx = new HashMap<String, Integer>();
+    private Map<String, Integer> wIdx = new HashMap<String, Integer>(); //mapping an index for each word
     private Map<Integer, String> wIdxInv = new HashMap<Integer, String>();
     private int allWords = 0; //my vocab world
     //============================================================================
 
     //====================Optimize the magnitude operation in distance calculation
-    private float[] wordTopicMatrix_viewColumn_topicIndex;
-    private float[] docTopicMatrix_viewColumn_docIndex;
+    private float[] wordTopicMatrix_clacColumn_topicIndex;
+    private float[] docTopicMatrix_clacColumn_docIndex;
     private ArrayList<Float> magTopDoc;
     //============================================================================
 
+    //Save our Ns
     private SparseMatrix wordTopMat; //number of word i in this topic k
     private SparseMatrix topDocMat; //no of words in this doc j assigned to topic k
 
     //======================================================HyperParams (as bias)
-    private float alpha = 0.01f; //common initialization
-    private float beta = 0.01f;
+    private float alpha ;
+    private float beta ;
     //============================================================================
 
 
-    public ldaAlgo(int topNum, List<String> documents) throws IOException {
+    public ldaAlgo(int topNum, List<String> docs) throws IOException {
+
         this.topNum = topNum;
 
         this.magTopDoc=new ArrayList<Float>();
-        wordTopicMatrix_viewColumn_topicIndex=new float[topNum];
-        docTopicMatrix_viewColumn_docIndex=new float[documents.size()];
+        wordTopicMatrix_clacColumn_topicIndex=new float[topNum];
+        docTopicMatrix_clacColumn_docIndex=new float[docs.size()];
 
-        for (String doc : documents) {
-            ArrayList<String> document = new ArrayList<String>();
-            ArrayList<Integer> state = new ArrayList<Integer>();
+        for (String d : docs) {
 
-            String tokens[] = doc.split(" "); //Discuss Manga?!
-            System.out.println(doc);
-            for (String token : tokens) {
-                document.add(token);
-                state.add(-1);
-                if (!this.wIdx.containsKey(token)) {
-                    this.wIdx.put(token, this.allWords);
-                    this.wIdxInv.put(this.allWords, token);
+            ArrayList<Integer> s = new ArrayList<Integer>();
+
+            ArrayList<String> doc = new ArrayList<String>();
+
+            String vocabs[] = d.split(" "); //split vocabs
+            System.out.println(d);
+
+            for (String w : vocabs) {
+
+                doc.add(w); s.add(-1); //initialize states with -1
+
+                if (!this.wIdx.containsKey(w)) {
+
+                    this.wIdx.put(w, this.allWords);
+                    this.wIdxInv.put(this.allWords, w);
                     this.allWords++;
                 }
             }
-            this.docMat.add(document);
-            this.currS.add(state);
+
+            this.docMat.add(doc);  this.currS.add(s);
         }
-        //what`s happening!! it dosen`t work
+        //Edit this
         int DMdims[] = {topNum, this.docMat.size()};
         this.topDocMat = new SparseMatrix(DMdims);
         int WDdims[] = {this.allWords, topNum};
         this.wordTopMat = new SparseMatrix(WDdims);
 
         //init NWT
-        for (int idx = 0; idx < topNum; idx++) {
-            this.NWT.put(idx, 0.0f);
-        }
-    }
+        for (int i = 0; i < topNum; i++)
+            this.NWT.put(i, 0.0f);
 
+
+        alpha = 0.01f; //common initialization
+        beta = 0.01f;
+    }
 
 
     //=======================================debugging purpose functions
-    public void reset() {
-        for (int row = 0; row < this.topNum; row++) {
-            for (int col = 0; col < this.docMat.size(); col++) {
-                this.topDocMat.set(row, col, 0.0);
+    public void clear() {
+        for (int r = 0; r < this.topNum; r++) {
+            for (int c = 0; c < this.docMat.size(); c++) {
+                this.topDocMat.set(r, c, 0.0);
             }
         }
-        for (int row = 0; row < this.allWords; row++) {
-            for (int col = 0; col < this.topNum; col++) {
-                this.wordTopMat.set(row, col, 0.0);
+        for (int r = 0; r < this.allWords; r++) {
+            for (int c = 0; c < this.topNum; c++) {
+                this.wordTopMat.set(r, c, 0.0);
             }
         }
     }
 
 
-    public void printMatrix() {
+    public void printContainers() {
         System.out.println("topDocMat:");
-        for (int row = 0; row < this.topNum; row++) {
-            for (int col = 0; col < this.docMat.size(); col++) {
-                System.out.print(this.topDocMat.get(row, col) + " ");
+        for (int r = 0; r < this.topNum; r++) {
+            for (int c = 0; c < this.docMat.size(); c++) {
+                System.out.print(this.topDocMat.get(r, c) + " ");
             }
             System.out.println();
         }
 
         System.out.println("wordTopMat:");
-        for (int row = 0; row < this.allWords; row++) {
-            for (int col = 0; col < this.topNum; col++) {
-                System.out.print(this.wordTopMat.get(row, col) + " ");
+        for (int r = 0; r < this.allWords; r++) {
+            for (int c = 0; c < this.topNum; c++) {
+                System.out.print(this.wordTopMat.get(r, c) + " ");
             }
             System.out.println();
         }
@@ -113,11 +122,7 @@ public class ldaAlgo {
 
     public void debugPrint(){
 
-//        Random rand = new Random();
-//        System.out.println(rand.nextInt());
-
         System.out.println("current state: " + currS);
-//        System.out.println(wordTopMat.viewPart(0,2,0,2));
 
         System.out.println("wordTopicProb: " + wordTopicProb);
         System.out.println("NWT: " + NWT);
@@ -125,16 +130,16 @@ public class ldaAlgo {
         System.out.println("wIdxInv: " + wIdxInv);
 
         System.out.println("topDocMat: ");
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j <2 ; j++) {
+        for (int i = 0; i < topNum; i++) {
+            for (int j = 0; j <docMat.size() ; j++) {
                 System.out.print(topDocMat.get(i,j) + " ");
             }
             System.out.println();
         }
 
         System.out.println("wordTopMat: ");
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j <2 ; j++) {
+        for (int i = 0; i < allWords; i++) {
+            for (int j = 0; j <topNum ; j++) {
                 System.out.print(wordTopMat.get(i,j) + " ");
             }
             System.out.println();
@@ -144,36 +149,40 @@ public class ldaAlgo {
     //======================================================================
 
 
-    //===========================Gibbs Sampler(Training and clustering part)
-    private void GibbsSampler(int docIdx) {
+    //===========================Training and clustering part
+    private void clusterAndLearn(int docIdx) {
+
         //printMatrix();
         //System.out.println("doc idx=" + docIdx);
         Random rand = new Random();
         ArrayList<String> doc = this.docMat.get(docIdx);
-        ArrayList<Integer> state = this.currS.get(docIdx);
+        ArrayList<Integer> s = this.currS.get(docIdx);
+
         int idx = 0;
         for (String w : doc) {
-            int zij = state.get(idx);    //current assignment for this word (topic of word i in doc j)
+			//The assumptiion here is that all words' states but the current are true 
+            int zij = s.get(idx);    //current assignment for this word (topic of word i in doc j)
 //            System.out.print("current state of word " + word + " --> zij=" + zij + " - ");
 //            System.out.println("word=" + word);
             int wordIndex = this.wIdx.get(w);
-//            System.out.print(word + "'s idx = " + wordIndex + " - "); //comm
-//            System.out.println(); //del
+//            System.out.print(word + "'s idx = " + wordIndex + " - ");
+//            System.out.println();
             float u = rand.nextFloat();
-            float[] Prob = new float[this.topNum + 1];
-            Prob[0] = 0.0f;
+            float[] Prob = new float[this.topNum + 1];  Prob[0] = 0.0f;
+
             for (int topicIdx = 1; topicIdx <= this.topNum; topicIdx++) {
 
                 float NKj = (float)this.topDocMat.get(topicIdx - 1, docIdx); //no of words in this doc j assigned to topic k
                 float Nwk = (float)this.wordTopMat.get(wordIndex, topicIdx - 1); //no times word i assigned to this topic
                 float NWT = this.NWT.get(topicIdx - 1); //total no of words in this topic
+
                 if (zij == (topicIdx - 1)) {
-                    //we need adjustments cause it`s assigned to diff topic
-                    NKj -= 1.0;
-                    Nwk -= 1.0;
-                    NWT -= 1.0;
+                    //if my current topic(zij) = specific topic so decrement 1 from its frequencies
+                    //because it`s assumed to be wrong,, then do the calculations and re-assign your values
+                    NKj -= 1.0; Nwk -= 1.0; NWT -= 1.0;
                 }
                 Prob[topicIdx] = Prob[topicIdx - 1] + (NKj + this.alpha) * (Nwk + this.beta) / (NWT + this.allWords * this.beta);
+                //Normalization constant 
             }
             for (int topicIdx = 0; topicIdx <= this.topNum; topicIdx++) {
                 System.out.print(Prob[topicIdx] + " ");
@@ -182,32 +191,41 @@ public class ldaAlgo {
 
             //===========Updating and Re-assigning
             for (int topicIdx = 1; topicIdx <= this.topNum; topicIdx++) {
-                if (u <= Prob[topicIdx] / Prob[this.topNum]) {
-                    state.set(idx, topicIdx - 1);
-                    //update NKj, Nwk, and NWT
-                    float newNKj = (float)this.topDocMat.get(topicIdx - 1, docIdx);
-                    float newNwk = (float)this.wordTopMat.get(wordIndex, topicIdx - 1);
-                    float newNWT = this.NWT.get(topicIdx - 1);
+                if ( u <= Prob[topicIdx]/Prob[this.topNum]) {
+
+                    s.set(idx, topicIdx - 1); //you picked a specific topic to be the true one topic
+
+                    //so update NKj, Nwk, and NWT
+                    //first get this topic frequencies.
+                    float NKjn = (float)this.topDocMat.get(topicIdx - 1, docIdx);
+                    float Nwkn = (float)this.wordTopMat.get(wordIndex, topicIdx - 1);
+                    float NWTn = this.NWT.get(topicIdx - 1);
+
                     if (zij != (topicIdx - 1)) {
-                        this.topDocMat.set(topicIdx - 1, docIdx, (newNKj + 1.0));
-                        this.wordTopMat.set(wordIndex, topicIdx - 1, (newNwk + 1.0));
-                        this.NWT.put(topicIdx - 1, (newNWT + 1.0f));
-                        if (zij >= 0) {
-                            float oldNKj = (float)this.topDocMat.get(zij, docIdx);
-                            float oldNwk = (float)this.wordTopMat.get(wordIndex, zij);
-                            float oldNWT = this.NWT.get(zij);
-                            this.topDocMat.set(zij, docIdx, (oldNKj - 1.0));
-                            this.wordTopMat.set(wordIndex, zij, (oldNwk - 1.0));
-                            this.NWT.put(zij, (oldNWT - 1.0f));
+
+                        //Then increment its frequencies with 1 if it wasn`t the initial one from the beginning
+                        this.topDocMat.set(topicIdx - 1, docIdx, (NKjn + 1.0));
+                        this.wordTopMat.set(wordIndex, topicIdx - 1, (Nwkn + 1.0));
+                        this.NWT.put(topicIdx - 1, (NWTn + 1.0f));
+
+                        //Now decrement the old topic frequencies by 1
+                        if (zij >= 0) { //not the -1 initialized
+
+                            float NKjold = (float)this.topDocMat.get(zij, docIdx);
+                            float Nwkold = (float)this.wordTopMat.get(wordIndex, zij);
+                            float NWTold = this.NWT.get(zij);
+                            this.topDocMat.set(zij, docIdx, (NKjold - 1.0));
+                            this.wordTopMat.set(wordIndex, zij, (Nwkold - 1.0));
+                            this.NWT.put(zij, (NWTold - 1.0f));
                         }
                     }
-                    break;    //finished update and new assignment
+                    break;    //finished update and new assignment for this word
                 }
             }
             idx++;
         }
 
-        this.currS.set(docIdx, state);
+        this.currS.set(docIdx, s);
     }
     //======================================================================
 
@@ -229,17 +247,17 @@ public class ldaAlgo {
     public void optimize()
     {
         for(int i=0;i<this.topNum;i++)
-            wordTopicMatrix_viewColumn_topicIndex[i] = (float) this.wordTopMat.getColumn(i).zSum();
+            wordTopicMatrix_clacColumn_topicIndex[i] = (float) this.wordTopMat.getColumn(i).zSum();
 
-        for(int i=0;i<this.docTopicMatrix_viewColumn_docIndex.length;i++)//docs
-            docTopicMatrix_viewColumn_docIndex[i]=(float)this.topDocMat.getColumn(i).zSum();
+        for(int i=0;i<this.docTopicMatrix_clacColumn_docIndex.length;i++)//docs
+            docTopicMatrix_clacColumn_docIndex[i]=(float)this.topDocMat.getColumn(i).zSum();
     }
 
     //P(w|k)
     public float getTopicWordProbability(String word, int topicIdx) {
         int wordIndex = this.wIdx.get(word);
         float Nwk = (float)this.wordTopMat.get(wordIndex, topicIdx); //no times word i assigned to this topic
-        float NWT = this.wordTopicMatrix_viewColumn_topicIndex[topicIdx]; //total no of words in this topic
+        float NWT = this.wordTopicMatrix_clacColumn_topicIndex[topicIdx]; //total no of words in this topic
 
         //probability(distro) that this word is in this topic
         return (Nwk + this.beta) / (NWT + this.allWords * this.beta);
@@ -248,13 +266,13 @@ public class ldaAlgo {
     //P(k|d)
     public float getTopicDocProbability(int docIdx, int topicIdx) {
         float NKj = (float)this.topDocMat.get(topicIdx, docIdx); //no of words in this doc j assigned to topic k
-        float Nj =  docTopicMatrix_viewColumn_docIndex[docIdx]; //total words in this doc
+        float Nj =  docTopicMatrix_clacColumn_docIndex[docIdx]; //total words in this doc
 
         //distribution of this word in that doc
         return (NKj + this.alpha) / (Nj + this.topNum * this.alpha);
     }
 
-    //======================================Building the distribution container and the invIdx
+//======================================Building the distribution container and the invIdx
     public void buildWordTopicsProb(){
 
         ArrayList<Float> tmp = new ArrayList<Float>();
@@ -362,13 +380,14 @@ public class ldaAlgo {
 
 //===============================Testing============================================
 
-    public void runLDA(int epochs) {
+    public void testLDA(int epochs) {
         //Train
-        reset();
+        clear();
         for (int i = 1; i <= epochs; i++) {
             for (int j = 0; j < this.docMat.size(); j++) {
-                GibbsSampler(j);
+                clusterAndLearn(j);
             }
         }
     }
 }
+
