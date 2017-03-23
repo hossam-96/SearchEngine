@@ -1,4 +1,4 @@
-package com.nlp.lda;
+package Main_Package;
 
 import java.io.IOException;
 import java.util.*;
@@ -7,6 +7,12 @@ import org.apache.mahout.math.SparseMatrix;
 
 public class ldaAlgo {
 
+
+    //for Debuge
+    private long LDA_Done;
+    private long LDA_all;
+    private long LDA_Done_Print;
+    //==========================================================
     private int topNum; //no. of my clustering centroids
     private List<ArrayList<String>> docMat = new ArrayList<ArrayList<String>>(); //container of my docs
     private List<ArrayList<Integer>> currS = new ArrayList<ArrayList<Integer>>(); //current state(assignment) of this word in that doc
@@ -219,6 +225,11 @@ public class ldaAlgo {
                     break;    //finished update and new assignment for this word
                 }
             }
+            LDA_Done+=this.topNum;
+            if(LDA_Done/10000>LDA_Done_Print) {
+                System.out.print("\r" + Math.floor((LDA_Done * 100.0) / LDA_all) + "%");
+                LDA_Done_Print++;
+            }
             idx++;
         }
 
@@ -243,11 +254,26 @@ public class ldaAlgo {
 
     public void optimize()
     {
-        for(int i=0;i<this.topNum;i++)
-            wordTopicMatrix_clacColumn_topicIndex[i] = (float) this.wordTopMat.getColumn(i).zSum();
+        long All=(long)this.docTopicMatrix_clacColumn_docIndex.length+(long)this.topNum;
+        long Done=0;
+        System.out.println("Max Num OF Iteration #"+All);
+        long f=All/100;
 
+
+        for(int i=0;i<this.topNum;i++) {
+            wordTopicMatrix_clacColumn_topicIndex[i] = (float) this.wordTopMat.viewColumn(i).zSum();
+            if(Done%f==0)
+                System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+            Done++;
+        }
         for(int i=0;i<this.docTopicMatrix_clacColumn_docIndex.length;i++)//docs
-            docTopicMatrix_clacColumn_docIndex[i]=(float)this.topDocMat.getColumn(i).zSum();
+        {
+            docTopicMatrix_clacColumn_docIndex[i] = (float) this.topDocMat.viewColumn(i).zSum();
+            if(Done%f==0)
+                System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+            Done++;
+        }
+        System.out.println();
     }
 
     //P(w|k)
@@ -275,6 +301,12 @@ public class ldaAlgo {
         ArrayList<Float> tmp = new ArrayList<Float>();
         this.wordTopicProb = new Hashtable<String, ArrayList<Float>>();
 
+        long All=(long)this.allWords*(long)this.topNum;
+        long Done=0;
+        System.out.println("Max Num OF Iteration #"+All);
+        long f=All/100;
+
+
         for(int i=0;i<this.allWords;i++){
             //get this word
             String w = wIdxInv.get(i);
@@ -285,18 +317,32 @@ public class ldaAlgo {
                 float tprob = getTopicWordProbability(w, j);
 //                System.out.print("Topic" + j + ": " + tprob + " | ");
                 tmp.add(j, tprob);
+
+                if(Done%f==0)
+                    System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+                Done++;
+
+
             }
             this.wordTopicProb.put(w,new ArrayList<Float>(tmp));
             tmp.clear();
 
 //            System.out.println();
         }
+        System.out.println();
 //        System.out.println(wordTopicProb);
     }
 
     public void buildTopicDocProb(){
         ArrayList<Float> tmp = new ArrayList<Float>();
         this.topicDocProb = new Hashtable<Integer, ArrayList<Float>>();
+
+        long All=(long)this.docMat.size()*(long)this.topNum;
+        long Done=0;
+        System.out.println("Max Num OF Iteration #"+All);
+
+        long f=All/100;
+
 
         for(int i=0;i<this.topNum;i++){
             //get this word
@@ -308,11 +354,15 @@ public class ldaAlgo {
                 float tprob = getTopicDocProbability(j, i);
 //                System.out.print("Doc" + j + ": " + tprob + " | ");
                 tmp.add(j, tprob);
+
+                if(Done%f==0)
+                    System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+                Done++;
             }
             this.topicDocProb.put(i,new ArrayList<Float>(tmp));
             tmp.clear();
-//            System.out.println();
         }
+        System.out.println();
 //        System.out.println(topicDocProb);
     }
 
@@ -322,18 +372,27 @@ public class ldaAlgo {
 
 //        System.out.println("Cal. magTopDoc");
         //in order not to calc it every tie in the loop
+
+        System.out.println("Starting Cal. MagOne");
+        long All=(long)this.docMat.size()*(long)this.topNum;
+        long Done=0;
+        System.out.println("Max Num OF Iteration #"+All);
+        long f=All/100;
         ArrayList<Float> xx = new ArrayList<Float>();
         for (int j = 0; j < this.docMat.size(); j++)
         {
             for (int k = 0; k < this.topNum; k++)
             {
                 xx.add(topicDocProb.get(k).get(j));
+                if(Done%f==0)
+                    System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+                Done++;
             }
             float mag1 = getMagnitude(xx);
             this.magTopDoc.add(mag1);
             xx.clear();
         }
-
+        System.out.println();
 //        System.out.println("Cal. magTopDoc is Done");
 
         Float magTopicDoc = 0.0f;
@@ -342,9 +401,16 @@ public class ldaAlgo {
         invertedIndexDist = new Hashtable<String, ArrayList<Float>>();
         ArrayList<Float> tmp = new ArrayList<Float>();
 
-        int done=0;
+
 //        System.out.println(this.allWords*this.docMat.size()*this.topNum);
 
+
+
+        System.out.println("LDA buildInvertedIndexDistribution Start");
+        long done=0;
+        long all=this.allWords;all*=this.docMat.size();all*=this.topNum;
+        System.out.println("Max Num OF Iteration #"+all);
+        f=all/100;
         //Get distance and build InvIdx
         for (int i=0; i<this.allWords; i++) { // WordTopic row
 
@@ -355,8 +421,8 @@ public class ldaAlgo {
                 float sum = 0.0f;
                 for (int k = 0; k <this.topNum ; k++) { // WordTopic col
 
-//                    if(done%1000000==0)
-//                        System.out.println(done); //print eevery 1000000 it
+                    if(done%f==0)
+                        System.out.print("\r"+Math.ceil((done*100.00)/all)+"%");
                     sum += wordTopicProb.get(wIdxInv.get(i)).get(k) * topicDocProb.get(k).get(j);
                     done++;
                 }
@@ -369,6 +435,7 @@ public class ldaAlgo {
             invertedIndexDist.put(wIdxInv.get(i),new ArrayList<Float>(tmp));
             tmp.clear();
         }
+        System.out.println();
 //        System.out.println(invertedIndexDist);
         return invertedIndexDist;
     }
@@ -377,13 +444,20 @@ public class ldaAlgo {
 
 //===============================Testing============================================
 
-    public void testLDA(int epochs) {
+    public void Train_LDA(int epochs,long ALL_WORDS_NUM) {
+        LDA_all=ALL_WORDS_NUM;LDA_all*=this.topNum;
+        System.out.println("Stating LDA Training");
+        System.out.println("Max Num OF Iteration #"+LDA_all*epochs);
         //Train
         clear();
         for (int i = 1; i <= epochs; i++) {
+            System.out.println("Stating LDA Iteration "+i);
+            LDA_Done=0;
+            LDA_Done_Print=0;
             for (int j = 0; j < this.docMat.size(); j++) {
                 clusterAndLearn(j);
             }
+            System.out.println();
         }
     }
 }

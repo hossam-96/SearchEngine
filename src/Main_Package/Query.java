@@ -18,8 +18,10 @@ public class Query
     {
 
         this.C_Query=new Cleaner();
-        this.Idx=new Indexer();
-        this.Idx.Load();
+        this.Idx=new Indexer(50);
+        this.Idx.Create();
+        this.Idx.Save();
+        //this.Idx.Load();
     }
 
     private void Set_Query_Type(String q)
@@ -84,7 +86,7 @@ public class Query
         });
 
 
-       // System.out.println(Sorted_Doucment_Nums);
+
         return Sorted_Doucment_Nums;
     }
 
@@ -114,7 +116,7 @@ public class Query
         System.out.println(this.Idx.Doucment_To_Words.get(Doucment_Num));
         if(First_Pos!=-1)
         {
-            for(int i=First_Pos;i<Math.min(this.Idx.Doucment_To_Words.get(Doucment_Num).get(0).size(),First_Pos+30);i++)
+            for(int i=First_Pos;i<Math.min(this.Idx.Doucment_To_Words.get(Doucment_Num).size(),First_Pos+30);i++)
             {
                 String Doucment_Term=this.Idx.Doucment_To_Words.get(Doucment_Num).get(0).get(i);
                 content+=" "+Doucment_Term;
@@ -132,7 +134,7 @@ public class Query
         ArrayList<QRT> Ret=new ArrayList<QRT>();
         String Title;
         String URL;
-        for(int i=0;i< RD.size();i++)
+        for(int i=0;i<10;i++)
         {
             Title=Idx.Doucment_To_Words.get(RD.get(i)).get(0).get(Idx.Doucment_To_Words.get(RD.get(i)).get(0).size()-1);
             URL=Idx.Doucment_To_Words.get(RD.get(i)).get(0).get(Idx.Doucment_To_Words.get(RD.get(i)).get(0).size()-2);

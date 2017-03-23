@@ -72,7 +72,7 @@ public class Cleaner
 
     public String[] Remove_Non_English(String Text)
     {
-        Text = Text.replaceAll("[^A-Za-z0-9_@#\\s]", " ");
+        Text = Text.replaceAll("[^A-Za-z\\s]", " ");
         Text = Text.trim().replaceAll(" +", " ");
         String Terms[] = Text.split(" ");
         for(int i=0;i<Terms.length;i++)

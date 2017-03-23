@@ -26,24 +26,24 @@ public class Main {
     }
     public static void main(String[] args)throws Exception
     {
-        Indexer I=new Indexer();
+        Indexer I=new Indexer(1000);
         I.Create();
         I.Save();
 
 
-        //Cleaner C =new Cleaner();
-        //File folder = new File(Con.Root_Path+"\\doucments");
-        //File[] listOfFiles = folder.listFiles();
-        //for (int i = 0; i < 50; i++)
-        //{
-        //if (listOfFiles[i].isFile())
-        //{
-        //String[] Doucmet_elements = Get_Doucment_Text(listOfFiles[i].getName());
-        //if(C.Clean_Text(Doucmet_elements[2]).length!=C.Clean_Text(Doucmet_elements[2]).length)
-        //System.out.println(i);
-        //}
-        //}
-        //
-        //
+//        Cleaner C =new Cleaner();
+//        File folder = new File(Con.Root_Path+"\\doucments");
+//        File[] listOfFiles = folder.listFiles();
+//        for (int i = 0; i < 50; i++)
+//        {
+//        if (listOfFiles[i].isFile())
+//        {
+//            String[] Doucmet_elements = Get_Doucment_Text(listOfFiles[i].getName());
+//            //if(C.Clean_Text(Doucmet_elements[2]).length!=C.Clean_Text_V2(Doucmet_elements[2]).length)
+//            System.out.println(C.Clean_Text(Doucmet_elements[2]).length + " "+ C.Clean_Text_V2(Doucmet_elements[2]).length);
+//        }
+//        }
+
+
     }
 }
