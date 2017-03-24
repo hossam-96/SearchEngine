@@ -1,3 +1,4 @@
+package Crawler;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,13 +11,13 @@ import java.net.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import com.shekhargulati.urlcleaner.UrlCleaner;
+import Crawler.com.shekhargulati.urlcleaner.UrlCleaner;
+import Main_Package.Const;
 
-/**
- * Created by Hosam on 06/03/17.
+/* * Created by Hosam on 06/03/17.
  */
 public class RThread extends Thread {
-
+    static Const con=new Const();
     private int threadNum, numOfThreads, seedsNum = 500;
     private java.sql.Connection conn = null;
     private Set<String> seeds;
@@ -33,7 +34,7 @@ public class RThread extends Thread {
             String db_url = "jdbc:mysql://localhost/link";
 
             String username = "root";
-            String password = "123456";
+            String password = "Moha4422med";
 
             Class.forName(jdbcDriver);
             conn = DriverManager.getConnection(db_url, username, password);
@@ -128,7 +129,7 @@ public class RThread extends Thread {
                                     }
 
 
-                                    FileWriter wr = new FileWriter("pages/" + threadNum + "_" + numOfPages++ + ".txt");
+                                    FileWriter wr = new FileWriter(con.Root_Path+"/pages/" + threadNum + "_" + numOfPages++ + ".txt");
                                     String htmlString = htmlDocument.text();
                                     if(htmlDocument.text().indexOf('\n') < 0)
                                         wr.write(htmlDocument.title() + "\n" + urlToString + "\n" + htmlString);

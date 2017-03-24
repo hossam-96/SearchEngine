@@ -1,6 +1,7 @@
 /**
  * Created by Hosam on 09/03/17.
  */
+package Crawler;
 import java.io.*;
 import java.sql.*;
 
@@ -11,7 +12,7 @@ public class Database {
             String db_url = "jdbc:mysql://localhost/link";
 
             String username = "root";
-            String password = "123456";
+            String password = "Moha4422med";
 
             Class.forName(jdbcDriver);
             Connection conn = DriverManager.getConnection(db_url, username, password);

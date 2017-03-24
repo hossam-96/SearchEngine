@@ -7,8 +7,14 @@ import com.mongodb.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Hashtable;
 import java.util.Set;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class MongoDB {
 
@@ -145,25 +151,27 @@ public class MongoDB {
     public static void main(String[] args)throws Exception
     {
 
-        //Indexer I=new Indexer();
+        //Indexer I=new Indexer(50);
         //I.Load();
-        MongoDB DB=new MongoDB();
+        //MongoDB DB=new MongoDB();
+        //System.out.println(DB.Get_Word_to_Doucment());
         //DB.MongoDB_Save(I);
-        DB.Get_WordDoucment_to_pos();
+        //DB.Get_WordDoucment_to_pos();
         //DB.MongoDB_Save(I);
-        /*table = db.getCollection("Names");
 
-        //create document and insert
-        BasicDBObject document = new BasicDBObject();
-        document.put("name", "Andre");
-        document.put("age", 34);
+        try {
 
-        BasicDBObject document2 = new BasicDBObject();
-        document2.put("name", "Beatrix");
-        document2.put("age", 19);
+            ObjectMapper mapper = new ObjectMapper();
+            String json = "{\"name\":\"mkyong\", \"age\":29}";
+            Map<String, Object> map = new HashMap<String, Object>();
+            // convert JSON string to Map
+            map = mapper.readValue(json, new TypeReference<Map<String, String>>(){});
+            System.out.println(map);
 
-        table.insert(document);
-        table.insert(document2);
-        System.out.println("a8");*/
+        }catch (Exception e)
+        {
+            e.getMessage();
+        }
+
     }
 }
