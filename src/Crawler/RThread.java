@@ -18,14 +18,17 @@ import Main_Package.Const;
  */
 public class RThread extends Thread {
     static Const con=new Const();
-    private int threadNum, numOfThreads, seedsNum = 500;
+    private int threadNum, numOfThreads, maxPages, seedsNum = 500;
     private java.sql.Connection conn = null;
     private Set<String> seeds;
+    private AtomicInteger sharedCounter;
 
-    public RThread(int num, int num2, Collection<String> c){
-        threadNum = num;
-        numOfThreads = num2;
+    public RThread(int threadNum, int numOfThreads, Collection<String> c, AtomicInteger sharedCounter, int maxPages){
+        this.threadNum = threadNum;
+        this.numOfThreads = numOfThreads;
         seeds = new HashSet<String>(c);
+        this.sharedCounter = sharedCounter;
+        this.maxPages = maxPages;
     }
 
     public void start () {
@@ -79,7 +82,10 @@ public class RThread extends Thread {
                 rs = stmt.executeQuery(sqlQuery);
                 while (rs.next()){
                     try {
-                        if(seed) row++;
+                        if(sharedCounter.get() > maxPages)
+                            return;
+                        if(seed)
+                            row++;
                         org.jsoup.Connection.Response connection = Jsoup.connect(rs.getString("link"))
                                 .ignoreHttpErrors(true)
                                 .timeout(1000)
@@ -138,6 +144,9 @@ public class RThread extends Thread {
                                     }
                                     wr.close();
 
+                                    if(sharedCounter.incrementAndGet() > maxPages)
+                                        return;
+                                      
                                     sqlQuery = "UPDATE threads SET numOfPages = " + (int)numOfPages
                                             + " WHERE thread = " + (int)threadNum + ";";
                                     stmt2.executeUpdate(sqlQuery);

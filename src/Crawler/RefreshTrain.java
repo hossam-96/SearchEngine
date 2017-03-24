@@ -140,7 +140,7 @@ public class RefreshTrain extends Thread{
             System.out.println("Enter number of threads: ");
             int num = reader.nextInt();
             RefreshTrain[] t = new RefreshTrain[num];
-            int hours = 4;
+            int hours = 16;
             for (int j = 0; j < 3; j++) {
                 for (int i = 0; i < num; i++) {
                     t[i] = new RefreshTrain(i + 1, hours);
@@ -150,7 +150,7 @@ public class RefreshTrain extends Thread{
                     t[i].join();
                 }
                 System.out.println("it will sleep now");
-                sleep(hours  * 60 * 1000);
+                sleep(hours * 60 * 60 * 1000);
                 hours /= 2;
             }
 
