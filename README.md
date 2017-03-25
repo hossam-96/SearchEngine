@@ -1,6 +1,6 @@
 # SearchEngine
 
-You can run this Project by running Main.java class in the Main_Package
+You can run this Project by running **Main.java** class in the Main_Package
 
 you should add these libraries to your project:
 
