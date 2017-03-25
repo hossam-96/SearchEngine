@@ -164,6 +164,29 @@ public class Indexer {
         }
     }
 
+    public void Get_New_Doucment()
+    {
+        int start=(new File(this.Con.Root_Path+"\\doucments")).listFiles().length;
+        File[] listOfFiles = (new File(this.Con.Root_Path+"\\pages")).listFiles();
+        for(int i=start;i<start+listOfFiles.length;i++)
+        {
+            String Name=Integer.toString(i);
+            for(int j=Name.length();j<6;j++)
+            {
+                Name="0"+Name;
+            }
+            Name+=".txt";
+            //System.out.println(Name);
+            File source = new File(this.Con.Root_Path+"\\pages\\"+listOfFiles[i-start].getName());
+            File destination = new File(this.Con.Root_Path+"\\doucments\\"+Name);
+            if (!destination.exists()) {
+                source.renameTo(destination);
+            }
+        }
+        System.out.println("#"+listOfFiles.length +" New Doucments Added");
+    }
+
+
     public void Create_Distance_Between_Word_and_Doucment()
     {
         try {

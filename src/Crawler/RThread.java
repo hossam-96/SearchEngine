@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import Crawler.com.shekhargulati.urlcleaner.UrlCleaner;
 import Main_Package.Const;
-
+import java.util.concurrent.atomic.AtomicInteger;
 /* * Created by Hosam on 06/03/17.
  */
 public class RThread extends Thread {
@@ -29,9 +29,7 @@ public class RThread extends Thread {
         seeds = new HashSet<String>(c);
         this.sharedCounter = sharedCounter;
         this.maxPages = maxPages;
-    }
 
-    public void start () {
         try {
             String jdbcDriver = "com.mysql.jdbc.Driver";
             String db_url = "jdbc:mysql://localhost/link";
@@ -45,9 +43,8 @@ public class RThread extends Thread {
         catch(Exception e){
             e.getMessage();
         }
-        Thread t = new Thread (this);
-        t.start ();
     }
+
     public void run(){
         try{
             Statement stmt = conn.createStatement();
@@ -133,7 +130,8 @@ public class RThread extends Thread {
                                         stmt2.executeUpdate(sqlQuery);
                                         continue;
                                     }
-
+                                    if(sharedCounter.incrementAndGet() > maxPages)
+                                        return;
 
                                     FileWriter wr = new FileWriter(con.Root_Path+"/pages/" + threadNum + "_" + numOfPages++ + ".txt");
                                     String htmlString = htmlDocument.text();
@@ -144,8 +142,7 @@ public class RThread extends Thread {
                                     }
                                     wr.close();
 
-                                    if(sharedCounter.incrementAndGet() > maxPages)
-                                        return;
+
                                       
                                     sqlQuery = "UPDATE threads SET numOfPages = " + (int)numOfPages
                                             + " WHERE thread = " + (int)threadNum + ";";

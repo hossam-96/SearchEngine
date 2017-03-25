@@ -1,9 +1,12 @@
 package Main_Package;
 
 import java.io.*;
+import Crawler.Crawler;
+import Crawler.RThread;
 import java.net.*;
 import javax.xml.parsers.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.LinkedList;
 public class Main {
@@ -26,11 +29,15 @@ public class Main {
     }
     public static void main(String[] args)throws Exception
     {
-        Indexer I=new Indexer(1000);
-        I.Create();
-        I.Save();
-
-
+        //Crawler C = new Crawler();
+        //C.RunCrawler(50);
+        Indexer I=new Indexer(100);
+        //I.Get_New_Doucment();
+        //I.Create();
+        //I.Print();
+        //I.Save();
+        I.Load();
+        System.out.println(I.Word_to_Doucment);
 //        Cleaner C =new Cleaner();
 //        File folder = new File(Con.Root_Path+"\\doucments");
 //        File[] listOfFiles = folder.listFiles();
