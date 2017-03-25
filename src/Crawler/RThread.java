@@ -154,14 +154,14 @@ public class RThread extends Thread {
                                 }
                             }
                             catch (Exception e){
-                                System.out.println(e.getMessage());
+                                // System.out.println(e.getMessage());
                             }
                         }
 
                         stmt2.close();
                     }
                     catch (Exception e){
-                        System.out.println(e.getMessage());
+                        // System.out.println(e.getMessage());
                     }
                 }
                 seed = false;
