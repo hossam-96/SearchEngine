@@ -115,8 +115,18 @@ public class RThread extends Thread {
                                 URL url = new URL(link.absUrl("href"));
                                 String urlToString = UrlCleaner.normalizeUrl(url.toString());
                                 if (urlToString.matches(regex) && !disallowed(urlToString) && seeds.contains("http://" + url.getHost() + "/")) {
-                                    sqlQuery = "INSERT INTO links VALUES ('" + urlToString + "'," + threadNum + ")";
-                                    stmt2.executeUpdate(sqlQuery);
+                                    sqlQuery = "SELECT * FROM links WHERE link = '" + urlToString + "';";
+                                    ResultSet rss = stmt2.executeQuery(sqlQuery);
+                                    if(rss.next()){
+                                        sqlQuery = "UPDATE links SET rank = " + (int)(rss.getInt("rank") + 1)
+                                                + " WHERE link = '" + urlToString + "';";
+                                        stmt2.executeUpdate(sqlQuery);
+                                        continue;
+                                    }
+                                    else {
+                                        sqlQuery = "INSERT INTO links VALUES ('" + urlToString + "'," + threadNum + ",1)";
+                                        stmt2.executeUpdate(sqlQuery);
+                                    }
                                     connection = Jsoup.connect(urlToString)
                                             .ignoreHttpErrors(true)
                                             .timeout(1000)

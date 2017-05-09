@@ -55,6 +55,7 @@ public class Database {
             sqlQuery = "CREATE TABLE links(" +
                     "link VARCHAR(255) NOT NULL," +
                     "thread INT NOT NULL," +
+                    "rank INT DEFAULT 1," +
                     "PRIMARY KEY (link));";
             stmt.executeUpdate(sqlQuery);
             sqlQuery = "CREATE TABLE seeds(" +
