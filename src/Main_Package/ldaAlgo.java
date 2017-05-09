@@ -55,7 +55,7 @@ public class ldaAlgo {
             ArrayList<String> doc = new ArrayList<String>();
 
             String vocabs[] = d.split(" "); //split vocabs
-//            System.out.println(d);
+            System.out.println(d);
 
             for (String w : vocabs) {
 
@@ -71,8 +71,11 @@ public class ldaAlgo {
 
             this.docMat.add(doc);  this.currS.add(s);
         }
-        this.topDocMat = new SparseMatrix(topNum, this.docMat.size());
-        this.wordTopMat = new SparseMatrix(this.allWords, topNum);
+        //Edit this
+        int DMdims[] = {topNum, this.docMat.size()};
+        this.topDocMat = new SparseMatrix(DMdims);
+        int WDdims[] = {this.allWords, topNum};
+        this.wordTopMat = new SparseMatrix(WDdims);
 
         //init NWT
         for (int i = 0; i < topNum; i++)
@@ -157,7 +160,7 @@ public class ldaAlgo {
 
         int idx = 0;
         for (String w : doc) {
-			//The assumptiion here is that all words' states but the current are true 
+			//The assumption here is that all words' states but the current are true
             int zij = s.get(idx);    //current assignment for this word (topic of word i in doc j)
 //            System.out.print("current state of word " + word + " --> zij=" + zij + " - ");
 //            System.out.println("word=" + word);
@@ -181,9 +184,9 @@ public class ldaAlgo {
                 Prob[topicIdx] = Prob[topicIdx - 1] + (NKj + this.alpha) * (Nwk + this.beta) / (NWT + this.allWords * this.beta);
                 //Normalization constant 
             }
-            for (int topicIdx = 0; topicIdx <= this.topNum; topicIdx++) {
+//            for (int topicIdx = 0; topicIdx <= this.topNum; topicIdx++) {
 //                System.out.print(Prob[topicIdx] + " ");
-            }
+//            }
 //            System.out.println();
 
             //===========Updating and Re-assigning
@@ -291,7 +294,7 @@ public class ldaAlgo {
 
 //            System.out.println();
         }
-//        System.out.println(wordTopicProb);
+        System.out.println(wordTopicProb);
     }
 
     public void buildTopicDocProb(){
@@ -313,7 +316,7 @@ public class ldaAlgo {
             tmp.clear();
 //            System.out.println();
         }
-//        System.out.println(topicDocProb);
+        System.out.println(topicDocProb);
     }
 
 
@@ -369,10 +372,78 @@ public class ldaAlgo {
             invertedIndexDist.put(wIdxInv.get(i),new ArrayList<Float>(tmp));
             tmp.clear();
         }
-//        System.out.println(invertedIndexDist);
+        System.out.println(invertedIndexDist);
         return invertedIndexDist;
     }
     //==============================================================================
+
+//============================================================Analyzing search query
+    public Hashtable<String, ArrayList<Float>> analyzeSearchQuery(String query){
+
+        //Holds distro of every word im my query to get the avg later
+        Hashtable<String, ArrayList<Float>> getQueryDistro = new Hashtable<String, ArrayList<Float>>();
+
+        //zeroes array to handle not found words(if any)
+        //querylength
+        ArrayList<Float> zeroes = new ArrayList<Float>(Collections.nCopies(this.topNum, 0.0f));
+        //querylength
+        String slices[] = query.split(" ");
+
+//        System.out.println("our lovely words: ");
+//        for (int i = 0; i <slices.length ; i++) {
+//            System.out.print(slices[i] + " ");
+//        }
+//
+//        System.out.println("Query length: " + query.length() + " slices length: " + slices.length);
+
+        //3*querylength
+        for (int i = 0; i <slices.length ; i++) {
+
+            if(this.wordTopicProb.get(slices[i]) != null)
+                getQueryDistro.put(slices[i], new ArrayList<Float>(this.wordTopicProb.get(slices[i])));
+            else
+                getQueryDistro.put(slices[i], new ArrayList<Float>(zeroes));
+        }
+        //complexity about 5*query length (about 100 iterations in real world example)
+
+        return getQueryDistro;
+    }
+    //==============================================================================
+
+//Getting query distro==============================================================
+    public ArrayList<Float> queryDistro(Hashtable<String, ArrayList<Float>> query){
+
+        float n = (float)query.size();
+
+        //numtopics
+        ArrayList<Float> queryTopicsDistro = new ArrayList<Float>(Collections.nCopies(this.topNum, 0.0f));
+
+        //numtopics*querylngth
+        for (String key : query.keySet()) {
+
+            ArrayList<Float> tmp = query.get(key);
+//            System.out.println("------------------------------------------------");
+//            System.out.println("key: " + key + " value: " + query.get(key));
+//            System.out.println("tmp :" + tmp);
+
+            for(int i=0; i<this.topNum; i++) {
+                queryTopicsDistro.set(i, queryTopicsDistro.get(i) + tmp.get(i));
+            }
+//            System.out.println("queryTopicsDistro: " + queryTopicsDistro);
+        }
+
+//        System.out.println("Lovely container bef AVG: "+ queryTopicsDistro);
+
+        //3*numtopics
+        for (int i = 0; i <this.topNum ; i++)
+            queryTopicsDistro.set(i, queryTopicsDistro.get(i)/n);
+
+//        System.out.println("Lovely container after AVG: " + queryTopicsDistro);
+
+        //so complexity = 4*numtopics + queryLength*numtopics => about 2500 iterations in real example
+
+        return queryTopicsDistro;
+    }
 
 
 //===============================Testing============================================
@@ -387,4 +458,3 @@ public class ldaAlgo {
         }
     }
 }
-
