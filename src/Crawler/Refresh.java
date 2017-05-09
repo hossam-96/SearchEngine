@@ -1,3 +1,5 @@
+package Crawler;
+import jdk.internal.dynalink.beans.StaticClass;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -8,13 +10,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-
+import Main_Package.Const;
 import static java.lang.Thread.sleep;
 
 /**
  * Created by Hosam on 20/03/17.
  */
 public class Refresh {
+    static Const con=new Const();
     public static void refreshPage(String pageName, String link){
         try {
             org.jsoup.Connection.Response connection = Jsoup.connect(link)
@@ -26,7 +29,7 @@ public class Refresh {
             Document htmlDocument = connection.parse();
             String htmlString = htmlDocument.text();
 
-            FileWriter wr = new FileWriter("pages/" + pageName + ".txt");
+            FileWriter wr = new FileWriter(con.Root_Path+"/pages/" + pageName + ".txt");
 
             if(htmlDocument.text().indexOf('\n') < 0)
                 wr.write(htmlDocument.title() + "\n" + link + "\n" + htmlString);
@@ -47,7 +50,7 @@ public class Refresh {
             String db_url = "jdbc:mysql://localhost/link";
 
             String username = "root";
-            String password = "123456";
+            String password = "Moha4422med";
 
             Class.forName(jdbcDriver);
             Connection conn = DriverManager.getConnection(db_url, username, password);

@@ -1,3 +1,4 @@
+package Crawler;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,30 +11,31 @@ import java.net.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import com.shekhargulati.urlcleaner.UrlCleaner;
-
-/**
- * Created by Hosam on 06/03/17.
+import Crawler.com.shekhargulati.urlcleaner.UrlCleaner;
+import Main_Package.Const;
+import java.util.concurrent.atomic.AtomicInteger;
+/* * Created by Hosam on 06/03/17.
  */
 public class RThread extends Thread {
-
-    private int threadNum, numOfThreads, seedsNum = 500;
+    static Const con=new Const();
+    private int threadNum, numOfThreads, maxPages, seedsNum = 500;
     private java.sql.Connection conn = null;
     private Set<String> seeds;
+    private AtomicInteger sharedCounter;
 
-    public RThread(int num, int num2, Collection<String> c){
-        threadNum = num;
-        numOfThreads = num2;
+    public RThread(int threadNum, int numOfThreads, Collection<String> c, AtomicInteger sharedCounter, int maxPages){
+        this.threadNum = threadNum;
+        this.numOfThreads = numOfThreads;
         seeds = new HashSet<String>(c);
-    }
+        this.sharedCounter = sharedCounter;
+        this.maxPages = maxPages;
 
-    public void start () {
         try {
             String jdbcDriver = "com.mysql.jdbc.Driver";
             String db_url = "jdbc:mysql://localhost/link";
 
             String username = "root";
-            String password = "123456";
+            String password = "Moha4422med";
 
             Class.forName(jdbcDriver);
             conn = DriverManager.getConnection(db_url, username, password);
@@ -41,9 +43,8 @@ public class RThread extends Thread {
         catch(Exception e){
             e.getMessage();
         }
-        Thread t = new Thread (this);
-        t.start ();
     }
+
     public void run(){
         try{
             Statement stmt = conn.createStatement();
@@ -78,7 +79,10 @@ public class RThread extends Thread {
                 rs = stmt.executeQuery(sqlQuery);
                 while (rs.next()){
                     try {
-                        if(seed) row++;
+                        if(sharedCounter.get() > maxPages)
+                            return;
+                        if(seed)
+                            row++;
                         org.jsoup.Connection.Response connection = Jsoup.connect(rs.getString("link"))
                                 .ignoreHttpErrors(true)
                                 .timeout(1000)
@@ -111,8 +115,18 @@ public class RThread extends Thread {
                                 URL url = new URL(link.absUrl("href"));
                                 String urlToString = UrlCleaner.normalizeUrl(url.toString());
                                 if (urlToString.matches(regex) && !disallowed(urlToString) && seeds.contains("http://" + url.getHost() + "/")) {
-                                    sqlQuery = "INSERT INTO links VALUES ('" + urlToString + "'," + threadNum + ")";
-                                    stmt2.executeUpdate(sqlQuery);
+                                    sqlQuery = "SELECT * FROM links WHERE link = '" + urlToString + "';";
+                                    ResultSet rss = stmt2.executeQuery(sqlQuery);
+                                    if(rss.next()){
+                                        sqlQuery = "UPDATE links SET rank = " + (int)(rss.getInt("rank") + 1)
+                                                + " WHERE link = '" + urlToString + "';";
+                                        stmt2.executeUpdate(sqlQuery);
+                                        continue;
+                                    }
+                                    else {
+                                        sqlQuery = "INSERT INTO links VALUES ('" + urlToString + "'," + threadNum + ",1)";
+                                        stmt2.executeUpdate(sqlQuery);
+                                    }
                                     connection = Jsoup.connect(urlToString)
                                             .ignoreHttpErrors(true)
                                             .timeout(1000)
@@ -126,9 +140,10 @@ public class RThread extends Thread {
                                         stmt2.executeUpdate(sqlQuery);
                                         continue;
                                     }
+                                    if(sharedCounter.incrementAndGet() > maxPages)
+                                        return;
 
-
-                                    FileWriter wr = new FileWriter("pages/" + threadNum + "_" + numOfPages++ + ".txt");
+                                    FileWriter wr = new FileWriter(con.Root_Path+"/pages/" + threadNum + "_" + numOfPages++ + ".txt");
                                     String htmlString = htmlDocument.text();
                                     if(htmlDocument.text().indexOf('\n') < 0)
                                         wr.write(htmlDocument.title() + "\n" + urlToString + "\n" + htmlString);
@@ -137,6 +152,8 @@ public class RThread extends Thread {
                                     }
                                     wr.close();
 
+
+                                      
                                     sqlQuery = "UPDATE threads SET numOfPages = " + (int)numOfPages
                                             + " WHERE thread = " + (int)threadNum + ";";
                                     stmt2.executeUpdate(sqlQuery);
@@ -147,14 +164,14 @@ public class RThread extends Thread {
                                 }
                             }
                             catch (Exception e){
-                                System.out.println(e.getMessage());
+                                // System.out.println(e.getMessage());
                             }
                         }
 
                         stmt2.close();
                     }
                     catch (Exception e){
-                        System.out.println(e.getMessage());
+                        // System.out.println(e.getMessage());
                     }
                 }
                 seed = false;

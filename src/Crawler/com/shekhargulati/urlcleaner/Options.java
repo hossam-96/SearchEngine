@@ -1,4 +1,4 @@
-package com.shekhargulati.urlcleaner;
+package Crawler.com.shekhargulati.urlcleaner;
 
 public class Options {
 

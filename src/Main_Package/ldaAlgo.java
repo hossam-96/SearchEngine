@@ -509,8 +509,6 @@ public class ldaAlgo {
         return queryTopicsDistro;
     }
 
-
-
 //===============================Testing============================================
 
     public void Train_LDA(int epochs,long ALL_WORDS_NUM) {

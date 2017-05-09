@@ -1,6 +1,7 @@
 /**
  * Created by Hosam on 20/03/17.
  */
+package Crawler;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.util.*;
@@ -10,9 +11,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Scanner;
-
+import Main_Package.Cleaner;
+import Main_Package.Const;
 public class RefreshTrain extends Thread{
     private int thread, hours;
+    static Const con=new Const();
     public RefreshTrain(int thread, int hours){
         this.thread = thread;
         this.hours = hours;
@@ -21,7 +24,7 @@ public class RefreshTrain extends Thread{
         int i = 0;
         String[] Ret={"title","url","content"};
         String sCurrentLine = "";
-        try (BufferedReader br = new BufferedReader(new FileReader("pages/"+ Document_Name + ".txt"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(con.Root_Path+"/pages/"+ Document_Name + ".txt"))) {
             while ((sCurrentLine = br.readLine()) != null) {
                 Ret[i]=sCurrentLine;
                 i++;
@@ -50,7 +53,8 @@ public class RefreshTrain extends Thread{
 
             Map<String,Pair> table = new HashMap<String,Pair>();
             Pair pair;
-            String[] oldDoc = file[2].split(" ");
+            Cleaner cleaner = new Cleaner();
+            String[] oldDoc = cleaner.Clean_Text(file[2]);
             for (int i = 0; i < oldDoc.length; i++) {
                 if(table.containsKey(oldDoc[i])){
                     pair = table.get(oldDoc[i]);
@@ -63,7 +67,7 @@ public class RefreshTrain extends Thread{
                     table.put(oldDoc[i],pair);
                 }
             }
-            String[] newDoc = htmlString.split(" ");
+            String[] newDoc = cleaner.Clean_Text(htmlString);
             for (int i = 0; i < newDoc.length; i++) {
                 if(table.containsKey(newDoc[i])){
                     pair = table.get(newDoc[i]);
@@ -81,8 +85,9 @@ public class RefreshTrain extends Thread{
             for(Map.Entry<String,Pair> word : table.entrySet()){
                 difference += Math.abs(word.getValue().f - word.getValue().s);
                 union += Math.max(word.getValue().f, word.getValue().s);
+                System.out.println(word.getKey());
             }
-
+            System.exit(0);
             double threshold = 0.1;
             if(difference / union > threshold)
                 return true;
@@ -102,7 +107,7 @@ public class RefreshTrain extends Thread{
             String db_url = "jdbc:mysql://localhost/link";
 
             String username = "root";
-            String password = "123456";
+            String password = "Moha4422med";
 
             Class.forName(jdbcDriver);
             Connection conn = DriverManager.getConnection(db_url, username, password);
@@ -135,7 +140,7 @@ public class RefreshTrain extends Thread{
             System.out.println("Enter number of threads: ");
             int num = reader.nextInt();
             RefreshTrain[] t = new RefreshTrain[num];
-            int hours = 4;
+            int hours = 16;
             for (int j = 0; j < 3; j++) {
                 for (int i = 0; i < num; i++) {
                     t[i] = new RefreshTrain(i + 1, hours);
@@ -145,7 +150,7 @@ public class RefreshTrain extends Thread{
                     t[i].join();
                 }
                 System.out.println("it will sleep now");
-                sleep(hours  * 60 * 1000);
+                sleep(hours * 60 * 60 * 1000);
                 hours /= 2;
             }
 

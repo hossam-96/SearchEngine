@@ -8,6 +8,7 @@ import java.util.*;
 
 public class Indexer {
     private long ALL_WORDS_NUM=0;
+    private int Max_it;
     private Const Con=new Const();
     protected Hashtable<String,Set<Integer>> Word_to_Doucment;
     protected Hashtable<String,Hashtable<Integer,Set<Integer>>> WordDoucment_to_pos;
@@ -21,7 +22,8 @@ public class Indexer {
     private  List<String> unique;
     private Hashtable<String, Integer> Map;
     private Set<Integer> pos;
-    public Indexer() {
+    public Indexer(int max_it) {
+        this.Max_it=max_it;
         this.C_Text=new Cleaner();
         Distance_Between_Word_and_Doucment=new Hashtable<String,ArrayList<Float>>();
         Word_to_Doucment = new Hashtable<String,Set<Integer>>();
@@ -87,7 +89,7 @@ public class Indexer {
         ArrayList<ArrayList<String>> L;
         ArrayList<String> L1;
         ArrayList<String> L2;
-        int all=50;
+        int all=Math.min(this.Max_it,listOfFiles.length);
         for (int i = 0; i < all; i++)
         {
             if (listOfFiles[i].isFile())
@@ -162,23 +164,41 @@ public class Indexer {
         }
     }
 
+    public void Get_New_Doucment()
+    {
+        int start=(new File(this.Con.Root_Path+"\\doucments")).listFiles().length;
+        File[] listOfFiles = (new File(this.Con.Root_Path+"\\pages")).listFiles();
+        for(int i=start;i<start+listOfFiles.length;i++)
+        {
+            String Name=Integer.toString(i);
+            for(int j=Name.length();j<6;j++)
+            {
+                Name="0"+Name;
+            }
+            Name+=".txt";
+            //System.out.println(Name);
+            File source = new File(this.Con.Root_Path+"\\pages\\"+listOfFiles[i-start].getName());
+            File destination = new File(this.Con.Root_Path+"\\doucments\\"+Name);
+            if (!destination.exists()) {
+                source.renameTo(destination);
+            }
+        }
+        System.out.println("#"+listOfFiles.length +" New Doucments Added");
+    }
+
+
     public void Create_Distance_Between_Word_and_Doucment()
     {
         try {
-            LDA Model=new LDA(400,this.docs);
-            Model.runLDA(5,this.ALL_WORDS_NUM);
-            System.out.println("LDA Is Done");
+            ldaAlgo Model=new ldaAlgo(100,this.docs);
+            Model.Train_LDA(4,this.ALL_WORDS_NUM);
             System.out.println("Starting Pre");
-            Model.pre();
-            System.out.println("LDA getWordTopicsProb Start");
-            Model.getWordTopicsProb();
-            System.out.println("LDA getWordTopicsProb Done");
-            System.out.println("LDA getTopicDocProb Start");
-            Model.getTopicDocProb();
-            System.out.println("LDA getTopicDocProb Done");
-            System.out.println("LDA buildInvertedIndexDistribution Start");
+            Model.optimize();
+            System.out.println("LDA buildWordTopicsProb Start");
+            Model.buildWordTopicsProb();
+            System.out.println("LDA buildTopicDocProb Start");
+            Model.buildTopicDocProb();
             this.Distance_Between_Word_and_Doucment=Model.buildInvertedIndexDistribution();
-            System.out.println("LDA buildInvertedIndexDistribution Done");
 
         }catch (Exception e)
         {
@@ -385,6 +405,7 @@ public class Indexer {
         this.Create_Word_to_Doucment();
         System.out.println();
         System.out.println("Increment With Last Indexer Is Done!");
+        System.out.println("Unique Words In Indexer#"+this.Word_to_Doucment.size());
         this.Create_Distance_Between_Word_and_Doucment();
     }
     public void Save()
