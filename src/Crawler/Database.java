@@ -6,6 +6,8 @@ import java.io.*;
 import java.sql.*;
 
 public class Database {
+    int MaxPopularRank;
+    int MinPopularRank;
     public void insert(String fileName){
         try {
             String jdbcDriver = "com.mysql.jdbc.Driver";
@@ -29,6 +31,52 @@ public class Database {
             System.out.println(e.getMessage());
         }
 
+    }
+    public void SetMaxPopularRank()throws Exception
+    {
+        String jdbcDriver = "com.mysql.jdbc.Driver";
+        String db_url = "jdbc:mysql://localhost/link";
+        String username = "root";
+        String password = "Moha4422med";
+        Class.forName(jdbcDriver);
+        Connection conn = DriverManager.getConnection(db_url, username, password);
+        Statement stmt = conn.createStatement();
+        String sqlQuery="SELECT max(rank) From links";
+        ResultSet rs=stmt.executeQuery(sqlQuery);
+        rs.next();
+        this.MaxPopularRank=rs.getInt(1);
+    }
+    public void SetMinPopularRank()throws Exception
+    {
+        String jdbcDriver = "com.mysql.jdbc.Driver";
+        String db_url = "jdbc:mysql://localhost/link";
+        String username = "root";
+        String password = "Moha4422med";
+        Class.forName(jdbcDriver);
+        Connection conn = DriverManager.getConnection(db_url, username, password);
+        Statement stmt = conn.createStatement();
+        String sqlQuery="SELECT min(rank) From links";
+        ResultSet rs=stmt.executeQuery(sqlQuery);
+        rs.next();
+        this.MinPopularRank= rs.getInt(1);
+    }
+    public float GetPopularRank(String Url)throws Exception
+    {
+        String jdbcDriver = "com.mysql.jdbc.Driver";
+        String db_url = "jdbc:mysql://localhost/link";
+        String username = "root";
+        String password = "Moha4422med";
+        Class.forName(jdbcDriver);
+        Connection conn = DriverManager.getConnection(db_url, username, password);
+        Statement stmt = conn.createStatement();
+        String sqlQuery="SELECT rank From links Where link='"+Url+"'";
+        ResultSet rs=stmt.executeQuery(sqlQuery);
+        if(rs.next())
+        {
+            int rank=rs.getInt(1);
+            return ((float)rank)/this.MaxPopularRank;
+        }
+        return 1;
     }
     public void create(String user, String pass){
         try {
@@ -78,4 +126,12 @@ public class Database {
             System.out.println(e.getMessage());
         }
     }
+    public static void main(String[] args)throws Exception
+    {
+        Database Mysqldb=new Database();
+        Mysqldb.SetMaxPopularRank();
+        System.out.println(Mysqldb.GetPopularRank("http://twitter.com/livejournal/"));
+
+    }
 }
+

@@ -7,13 +7,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.ArrayList;
+import com.mongodb.DBObject;
 
 /**
  * Created by moham on 3/12/2017.
  */
 public class Servlet extends HttpServlet {
 
-    private Query Q=new Query();
+    private NewQuery Q;
+
+    public Servlet() throws Exception{
+        this.Q=new NewQuery();
+    }
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
        //response.setContentType("text/html");
        //PrintWriter out=response.getWriter();
