@@ -441,6 +441,73 @@ public class ldaAlgo {
     }
     //==============================================================================
 
+//============================================================Analyzing search query
+    public Hashtable<String, ArrayList<Float>> analyzeSearchQuery(String query){
+
+        //Holds distro of every word im my query to get the avg later
+        Hashtable<String, ArrayList<Float>> getQueryDistro = new Hashtable<String, ArrayList<Float>>();
+
+        //zeroes array to handle not found words(if any)
+        //querylength
+        ArrayList<Float> zeroes = new ArrayList<Float>(Collections.nCopies(this.topNum, 0.0f));
+        //querylength
+        String slices[] = query.split(" ");
+
+//        System.out.println("our lovely words: ");
+//        for (int i = 0; i <slices.length ; i++) {
+//            System.out.print(slices[i] + " ");
+//        }
+//
+//        System.out.println("Query length: " + query.length() + " slices length: " + slices.length);
+
+        //3*querylength
+        for (int i = 0; i <slices.length ; i++) {
+
+            if(this.wordTopicProb.get(slices[i]) != null)
+                getQueryDistro.put(slices[i], new ArrayList<Float>(this.wordTopicProb.get(slices[i])));
+            else
+                getQueryDistro.put(slices[i], new ArrayList<Float>(zeroes));
+        }
+        //complexity about 5*query length (about 100 iterations in real world example)
+
+        return getQueryDistro;
+    }
+    //==============================================================================
+
+//Getting query distro==============================================================
+    public ArrayList<Float> queryDistro(Hashtable<String, ArrayList<Float>> query){
+
+        float n = (float)query.size();
+
+        //numtopics
+        ArrayList<Float> queryTopicsDistro = new ArrayList<Float>(Collections.nCopies(this.topNum, 0.0f));
+
+        //numtopics*querylngth
+        for (String key : query.keySet()) {
+
+            ArrayList<Float> tmp = query.get(key);
+//            System.out.println("------------------------------------------------");
+//            System.out.println("key: " + key + " value: " + query.get(key));
+//            System.out.println("tmp :" + tmp);
+
+            for(int i=0; i<this.topNum; i++) {
+                queryTopicsDistro.set(i, queryTopicsDistro.get(i) + tmp.get(i));
+            }
+//            System.out.println("queryTopicsDistro: " + queryTopicsDistro);
+        }
+
+//        System.out.println("Lovely container bef AVG: "+ queryTopicsDistro);
+
+        //3*numtopics
+        for (int i = 0; i <this.topNum ; i++)
+            queryTopicsDistro.set(i, queryTopicsDistro.get(i)/n);
+
+//        System.out.println("Lovely container after AVG: " + queryTopicsDistro);
+
+        //so complexity = 4*numtopics + queryLength*numtopics => about 2500 iterations in real example
+
+        return queryTopicsDistro;
+    }
 
 //===============================Testing============================================
 
