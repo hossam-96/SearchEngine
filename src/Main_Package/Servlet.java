@@ -1,5 +1,5 @@
 package Main_Package;
-
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.RequestDispatcher;
@@ -16,10 +16,16 @@ public class Servlet extends HttpServlet {
 
     private NewQuery Q;
 
-    public Servlet() throws Exception{
-        this.Q=new NewQuery();
-    }
 
+    public void init() throws ServletException {
+
+        try {
+            this.Q=new NewQuery();
+        }
+        catch (Exception e) {
+            e.getMessage();
+        }
+    }
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
        //response.setContentType("text/html");
        //PrintWriter out=response.getWriter();

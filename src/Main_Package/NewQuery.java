@@ -1,5 +1,8 @@
 package Main_Package;
+import Crawler.Database;
 import com.mongodb.*;
+
+import javax.sound.midi.Soundbank;
 import java.util.*;
 
 /**
@@ -11,12 +14,14 @@ public class NewQuery
     private String Title;
     private Cleaner C_Query;
     public int Type;
-    private String[] Terms;
+    public String[] Terms;
     private MongoDB DB;
+    private Database MysqlDb;
     public NewQuery()throws Exception
     {
         this.C_Query=new Cleaner();
         this.DB=new MongoDB();
+        this.MysqlDb=new Database();
     }
 
     private void Set_Query_Type(String q)
@@ -61,7 +66,7 @@ public class NewQuery
             ArrayList<String>WordDocument=new ArrayList<>();
             for (int i=0;i<Terms.length;i++)
             {
-                WordDocument.add(Terms[i]+WordDocument);
+                WordDocument.add(Terms[i]+DoucmentNumberString);
             }
             Distance_between_Doucment_k_and_Query=DB.LdaWordDoucmentGet(WordDocument);
             Dis.put(k,Distance_between_Doucment_k_and_Query);
@@ -114,12 +119,12 @@ public class NewQuery
             ArrayList<String>WordsAfterCleaning=(ArrayList<String>)Page.get("WordsAfterCleaning");
             this.Url=(String)Page.get("Url");
             this.Title=(String)Page.get("Title");
-            for(int i=0;i<WordsBeforCleaning.size();i++)
+            for(int i=0;i< Math.min(WordsBeforCleaning.size(), WordsAfterCleaning.size());i++)
             {
                 Boolean Bold=false;
                 for(int j=0;j<Terms.length;j++)
                 {
-                    if(WordsAfterCleaning.get(i).equals(Terms[j])){
+                    if(WordsAfterCleaning.get(i).equals(Terms[j])&&Terms[j].equals("Stopword")==false){
                         Bold=true;
                         break;
                     }
@@ -138,22 +143,23 @@ public class NewQuery
 
     public  ArrayList<QRT>  Add_Query(String q)throws Exception
     {
+        this.MysqlDb.insertQuery(q);
         this.Set_Query_Type(q);
         this.Exteact_Query_Key_Terms(q);
 
         ArrayList<Integer> RD;
-        if(this.Type==1)
+        /*if(this.Type==1)
         {
             RD=new ArrayList<Integer>();
             RD.addAll(this.Get_Query_Doucments());
         }
-        else
+        else*/
         RD=this.Rank_Doucments(this.Get_Query_Doucments());
-
         ArrayList<QRT> Ret=new ArrayList<QRT>();
         for(int i=0;i<RD.size();i++)
         {
             String Content=get_content(RD.get(i));
+            //System.out.println(this.Url +" "+RD.get(i));
             Ret.add(new QRT(this.Url,this.Title,RD.get(i),Content));
         }
         return Ret;
@@ -162,6 +168,6 @@ public class NewQuery
     public static void main(String[] args)throws Exception
     {
         NewQuery Q=new NewQuery();
-        Q.Add_Query("'first advisory board'");
+        Q.Add_Query("Hannah Baker");
     }
 }

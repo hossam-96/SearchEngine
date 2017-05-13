@@ -2,6 +2,7 @@ package Main_Package;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.ArrayList;
 
 /**
  * Created by moham on 3/9/2017.
@@ -31,9 +32,9 @@ public class Cleaner {
     }
 
     public String Replace_contractions_with_full_form(String Text) {
-        String Terms[] = Text.split(" ");
+        String Terms[] = Text.trim().split(" ");
         for (int i = 0; i < Terms.length; i++) {
-            Terms[i] = Contractions_Text.Convert_To_FullFrom(Terms[i]);
+            Terms[i] = Contractions_Text.Convert_To_FullFrom(Terms[i].toLowerCase());
         }
         return String.join(" ", Terms);
     }
@@ -81,17 +82,22 @@ public class Cleaner {
         return Terms;
     }
 
-
     public String[] Clean_Text(String Text) {
+        //System.out.println(Text);
         Text = this.Convert_To_Lower(Text);
+        Text=this.Remove_punctuation(Text);
+        //System.out.println(Text);
         Text = this.Replace_contractions_with_full_form(Text);
+        //System.out.println(Text);
         Text = this.Remove_StopWords(Text);
+        //System.out.println(Text);
         String Terms[] = this.Remove_Non_English(Text);
         Terms = this.Stem_Words(Terms);
         return Terms;
     }
 
     public String[] Clean_Text_V2(String Text) {
+        Text=this.Remove_punctuation(Text);
         Text = this.Replace_contractions_with_full_form(Text);
         String Terms[] = this.Remove_Non_English(Text);
         return Terms;

@@ -2,6 +2,9 @@
  * Created by Hosam on 09/03/17.
  */
 package Crawler;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.io.*;
 import java.sql.*;
 
@@ -120,17 +123,57 @@ public class Database {
                     "link VARCHAR(255)," +
                     "PRIMARY KEY (thread,pageNum));";
             stmt.executeUpdate(sqlQuery);
+            sqlQuery = "CREATE TABLE querys(" +
+                    "query VARCHAR (1000)," +
+                    "PRIMARY KEY (query));";
+            stmt.executeUpdate(sqlQuery);
             stmt.close();
 
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
     }
+    public List<String> GetAjaxData(String Query)throws Exception
+    {
+        Query="%"+Query+"%";
+        String jdbcDriver = "com.mysql.jdbc.Driver";
+        String db_url = "jdbc:mysql://localhost/link";
+        String username = "root";
+        String password = "Moha4422med";
+        Class.forName(jdbcDriver);
+        Connection conn = DriverManager.getConnection(db_url, username, password);
+        PreparedStatement stmt = conn.prepareStatement("SELECT query From querys Where query Like ? ORDER By query Limit 10");
+        stmt.setString(1, Query);
+        ResultSet rs=stmt.executeQuery();
+        List<String>Ret=new ArrayList<>();
+        while(rs.next())
+        {
+            Ret.add(rs.getString(1));
+        }
+        return Ret;
+    }
+
+    public void insertQuery(String Query){
+        try {
+            String jdbcDriver = "com.mysql.jdbc.Driver";
+            String db_url = "jdbc:mysql://localhost/link";
+
+            String username = "root";
+            String password = "Moha4422med";
+
+            Class.forName(jdbcDriver);
+            Connection conn = DriverManager.getConnection(db_url, username, password);
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO querys VALUES ( ? )");
+            stmt.setString(1, Query);
+            stmt.executeUpdate();
+        }catch (Exception e){
+        }
+    }
+
     public static void main(String[] args)throws Exception
     {
         Database Mysqldb=new Database();
-        Mysqldb.SetMaxPopularRank();
-        System.out.println(Mysqldb.GetPopularRank("http://twitter.com/livejournal/"));
+        Mysqldb.insertQuery("baker");
 
     }
 }

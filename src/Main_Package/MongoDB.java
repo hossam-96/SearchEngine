@@ -5,12 +5,18 @@ package Main_Package;
  */
 import Crawler.Database;
 import com.mongodb.*;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.*;
 
 
 public class MongoDB {
 
+    private Const Con=new Const();
     Map<Integer, Integer> PharsingQueryFirstPos;
+    Hashtable<Integer,Integer> MaxPr;
     Mongo mongo = null;
     DB db=null;
     DBCollection table=null;
@@ -133,13 +139,34 @@ public class MongoDB {
     public Set<Integer> WordToDoucmentGetUnion(String[] Terms)
     {
         Set<Integer>Ret=new HashSet<>();
+        Set<Integer>Intersection=new HashSet<>();
+        HashMap<Integer,Integer>Map=new HashMap<>();
         DBCursor Cursor=db.getCollection("Word_to_Doucment").find(new BasicDBObject("Word",new BasicDBObject("$in",Terms)));
         if(Cursor.hasNext())
         {
             ArrayList<Integer> Docs=(ArrayList<Integer>) Cursor.next().get("Doucments_Num");
             Ret.addAll(Docs);
         }
+        WordToDoucmentGetIntersectionNoOrder(Terms);
         return Ret;
+    }
+    public void WordToDoucmentGetIntersectionNoOrder(String[] Terms) {
+        Set<Integer> Ret = new HashSet<>();
+        for (int i = 0; i < Terms.length; i++) {
+            DBCursor Cursor = db.getCollection("Word_to_Doucment").find(new BasicDBObject("Word", Terms[i]));
+            ArrayList<Integer> Docs;
+            if (Cursor.hasNext())
+                Docs = (ArrayList<Integer>) Cursor.next().get("Doucments_Num");
+            else Docs = new ArrayList<Integer>();
+            if (i == 0) Ret.addAll(Docs);
+            else
+                Ret.retainAll(Docs);//intersection
+        }
+        MaxPr=new Hashtable<>();
+        for(Integer DocNum:Ret)
+        {
+            MaxPr.put(DocNum,100);
+        }
     }
     public Set<Integer> WordToDoucmentGetIntersection(String[] Terms)
     {
@@ -198,8 +225,30 @@ public class MongoDB {
         return HaveAllInorder;
     }
 
+    private String Get_Doucment_Text(String Doucment_Name) {
+        int i = 0;
+        String[] Ret={"title","url","content"};
+        String sCurrentLine = "";
+        try (BufferedReader br = new BufferedReader(new FileReader(this.Con.Root_Path+"\\doucments\\" + Doucment_Name))) {
+            while ((sCurrentLine = br.readLine()) != null) {
+                Ret[i]=sCurrentLine;
+                i++;
+            }
+
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return Ret[2];
+    }
+
     public List<String> DoucmentToWordsGetWordsAfterCleaning()
     {
+        File folder = new File(this.Con.Root_Path+"\\doucments");
+        File[] listOfFiles = folder.listFiles();
+        long All=listOfFiles.length;
+        long Done=0;
+        long f=All/100;
+
         this.UniqueWord=0;
         List<String> Ret=new ArrayList<>();
         DBObject CN;
@@ -212,7 +261,27 @@ public class MongoDB {
             this.UniqueWord+=list.size();
             String listString = String.join(" ", list);
             Ret.add(listString);
+            if(Done%f==0)
+                System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+            Done++;
         }
+
+        Cleaner C_Text=new Cleaner();
+        String[] NewList;
+        for (int i = Ret.size(); i < listOfFiles.length; i++)
+        {
+            if (listOfFiles[i].isFile())
+            {
+                String Doucmet_Content=this.Get_Doucment_Text(listOfFiles[i].getName());
+                NewList=C_Text.Clean_Text(Doucmet_Content);
+                this.UniqueWord+=NewList.length;
+                Ret.add(String.join(" ",NewList));
+                if(Done%f==0)
+                    System.out.print("\r" + Math.floor((Done * 100.0) / All) + "%");
+                Done++;
+            }
+        }
+        System.out.println();
         System.out.println("Getting Training Set From Database is Done");
         return Ret;
     }
@@ -256,11 +325,6 @@ public class MongoDB {
             document.put("Word",Word);
             document.put("Probability",Prob);
             db.getCollection("Lda_Word_Topics").insert(document);
-
-            document = new BasicDBObject();
-            document.put("Word",Word);
-            document.put("Probability",new ArrayList<>());
-            db.getCollection("Lda_Word_Doucment").insert(document);
         }
         System.out.println("Adding Training Results To Database is Done");
 
@@ -291,6 +355,14 @@ public class MongoDB {
         {
             CN=Cursor.next();
             ArrayList<String> DocumentsWords=(ArrayList<String>) CN.get("WordsAfterCleaning");
+
+            Map<String, Integer> DocumentsWordsFreq = new HashMap<String, Integer>();
+            for (String temp : DocumentsWords) {
+                Integer count = DocumentsWordsFreq.get(temp);
+                DocumentsWordsFreq.put(temp, (count == null) ? 1 : count + 1);
+            }
+
+
             int DoucmentNumber=(Integer)CN.get("Doucment_Number");
 
             float PopularRank=Mysqldb.GetPopularRank((String) CN.get("Url"));
@@ -308,20 +380,23 @@ public class MongoDB {
             //To get Topic Distribution For Document
             ArrayList<ArrayList<Double>>WordsTopic=new ArrayList<>();
             ArrayList<String>WordsDocument=new ArrayList<>();
+            long NumRows=0;
             while(ProbCursor.hasNext())
             {
                 DBObject ProbCN=ProbCursor.next();
                 ArrayList<Double>WordProbability=(ArrayList<Double>)ProbCN.get("Probability");
-                WordsDocument.add((String)ProbCN.get("Word")+DoucmentNumberString);
+                String LdaWord=(String)ProbCN.get("Word");
+                WordsDocument.add(LdaWord+DoucmentNumberString);
                 WordsTopic.add(WordProbability);
                 for(int i=0;i<WordProbability.size();i++)
                 {
-                    DoucmentProbability[i]+=WordProbability.get(i);
+                    DoucmentProbability[i]+=WordProbability.get(i)*DocumentsWordsFreq.get(LdaWord);
                 }
+                NumRows+=DocumentsWordsFreq.get(LdaWord);
             }
             for(int i=0;i<100;i++)
             {
-                DoucmentProbability[i]/=WordNum;
+                DoucmentProbability[i]/=NumRows;
             }
             for(int j=0;j<WordsTopic.size();j++)
             {
@@ -360,7 +435,12 @@ public class MongoDB {
         DBCursor Cursor=db.getCollection("Lda_Word_Doucment").find(new BasicDBObject("WordDoucment",new BasicDBObject("$in",WordDocuments)));
         while(Cursor.hasNext())
         {
-            Relevance+=(double) Cursor.next().get("Close");
+            DBObject CN=Cursor.next();
+            int DocNum=(int)CN.get("Doucment_Number");
+            Relevance+=(double) CN.get("Close");
+            if(this.MaxPr!=null)
+            if(this.MaxPr.containsKey(DocNum))
+                Relevance+=1000;
         }
         Relevance/=WordDocuments.size();
         return Relevance;
@@ -369,6 +449,18 @@ public class MongoDB {
     public static void main(String[] args)throws Exception
     {
         MongoDB DB=new MongoDB();
-
+        int x=0;
+        DBCursor Cursor = DB.db.getCollection("Doucment_To_Words").find();
+        while (Cursor.hasNext())
+        {
+            DBObject CN=Cursor.next();
+            ArrayList<String> L1=(ArrayList<String>) CN.get("WordsAfterCleaning");
+            ArrayList<String> L2=(ArrayList<String>) CN.get("WordsBeforCleaning");
+            if(L1.size()!=L2.size())
+            {
+                x++;
+            }
+        }
+        System.out.println(x);
     }
 }
