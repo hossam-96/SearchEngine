@@ -10,5 +10,5 @@ you should add these libraries to your project:
 
 3- Mahout Math Library "https://mvnrepository.com/artifact/org.apache.mahout/mahout-math/0.7"
 
-4- MangoDB Java Driver "https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver"
+4- MongoDB Java Driver "https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver"
  
